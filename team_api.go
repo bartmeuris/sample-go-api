@@ -34,13 +34,16 @@ func (r TeamResource) Register(prefix string, container *restful.Container) {
 	ws.Route(ws.GET("").To(r.getAll).
 		Doc("Get all teams").
 		Metadata(openapi.KeyOpenAPITags, tags).
-		Writes([]Team{}),
+		Writes([]Team{}).
+		Returns(200, "OK", []Team{}),
 	)
 	ws.Route(ws.GET("/{id}").To(r.get).
 		Doc("Get a specific team").
 		Param(ws.PathParameter("id", "team id").DataType("string")).
 		Metadata(openapi.KeyOpenAPITags, tags).
-		Writes(Team{}),
+		Writes(Team{}).
+		Returns(200, "OK", Team{}).
+		Returns(404, "Not Found", nil),
 	)
 	ws.Route(ws.POST("/").To(r.add).
 		Doc("Create a team").
@@ -51,7 +54,9 @@ func (r TeamResource) Register(prefix string, container *restful.Container) {
 	ws.Route(ws.DELETE("/{id}").To(r.delete).
 		Doc("Delete a team").
 		Param(ws.PathParameter("id", "team id").DataType("string")).
-		Metadata(openapi.KeyOpenAPITags, tags),
+		Metadata(openapi.KeyOpenAPITags, tags).
+		Returns(200, "OK", nil).
+		Returns(404, "Not Found", nil),
 	)
 
 	container.Add(ws)
@@ -95,10 +100,12 @@ func (r TeamResource) add(request *restful.Request, response *restful.Response) 
 
 func (r TeamResource) delete(request *restful.Request, response *restful.Response) {
 	id := request.PathParameter("id")
-	team := TeamDb{Team: Team{ID: id}}
-	err := r.Db.Delete(&team).Error
-	if err != nil {
+	var ms TeamDb
+	if err := r.Db.Where("ID = ?", id).First(&ms).Error; err != nil {
+		response.WriteErrorString(http.StatusNotFound, fmt.Sprintf("Team '%s' not found", id))
+	} else if err := r.Db.Delete(&ms).Error; err != nil {
 		response.AddHeader("Content-Type", "text/plain")
 		response.WriteErrorString(http.StatusInternalServerError, err.Error())
 	}
+
 }
