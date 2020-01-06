@@ -5,7 +5,7 @@
 * Uses gorm as storage backend
 * Includes a swagger-ui instance served on `/swaggerui`
 * API is served under `/api/`
-
+* API spec is served under `/api/apidocs.json`
 
 ## Running
 
