@@ -1,4 +1,4 @@
-package api
+package models
 
 // Team object
 type Team struct {

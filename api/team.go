@@ -4,28 +4,27 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bartmeuris/sample-go-api/models"
 	"github.com/emicklei/go-restful"
 	openapi "github.com/emicklei/go-restful-openapi"
 	"github.com/jinzhu/gorm"
 )
 
-// TeamResource onject
-type TeamResource struct {
+// TeamAPI onject
+type TeamAPI struct {
 	Db *gorm.DB
 }
 
-// NewTeamService creates a new team service
-func NewTeamService(prefix string) *restful.WebService {
-	prefix = prepPrefix(prefix)
-	return nil
+// NewTeamAPI returns a new TeamAPI object
+func NewTeamAPI(db *gorm.DB) *TeamAPI {
+	return &TeamAPI{Db: db}
 }
 
 // Register registers the API on the given container the API
-func (r TeamResource) Register(prefix string, container *restful.Container) {
-	r.Db.AutoMigrate(&TeamDb{})
+func (r TeamAPI) Register(prefix string, container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.
-		Path(prefix).
+		Path(prepPrefix(prefix)).
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON).
 		ApiVersion(APIVersion)
@@ -34,22 +33,22 @@ func (r TeamResource) Register(prefix string, container *restful.Container) {
 	ws.Route(ws.GET("").To(r.getAll).
 		Doc("Get all teams").
 		Metadata(openapi.KeyOpenAPITags, tags).
-		Writes([]Team{}).
-		Returns(200, "OK", []Team{}),
+		Writes([]models.Team{}).
+		Returns(200, "OK", []models.Team{}),
 	)
 	ws.Route(ws.GET("/{id}").To(r.get).
 		Doc("Get a specific team").
 		Param(ws.PathParameter("id", "team id").DataType("string")).
 		Metadata(openapi.KeyOpenAPITags, tags).
-		Writes(Team{}).
-		Returns(200, "OK", Team{}).
+		Writes(models.Team{}).
+		Returns(200, "OK", models.Team{}).
 		Returns(404, "Not Found", nil),
 	)
 	ws.Route(ws.POST("/").To(r.add).
 		Doc("Create a team").
 		Metadata(openapi.KeyOpenAPITags, tags).
-		Reads(Team{}).
-		Returns(201, "Created", Team{}),
+		Reads(models.Team{}).
+		Returns(201, "Created", models.Team{}),
 	)
 	ws.Route(ws.DELETE("/{id}").To(r.delete).
 		Doc("Delete a team").
@@ -62,9 +61,9 @@ func (r TeamResource) Register(prefix string, container *restful.Container) {
 	container.Add(ws)
 }
 
-func (r TeamResource) get(request *restful.Request, response *restful.Response) {
+func (r TeamAPI) get(request *restful.Request, response *restful.Response) {
 	id := request.PathParameter("id")
-	var ms TeamDb
+	var ms models.TeamDb
 	if err := r.Db.Where("ID = ?", id).First(&ms).Error; err != nil {
 		response.WriteErrorString(http.StatusNotFound, fmt.Sprintf("Team '%s' not found", id))
 	} else {
@@ -72,13 +71,13 @@ func (r TeamResource) get(request *restful.Request, response *restful.Response) 
 	}
 }
 
-func (r TeamResource) getAll(request *restful.Request, response *restful.Response) {
-	var msdbo []TeamDb
+func (r TeamAPI) getAll(request *restful.Request, response *restful.Response) {
+	var msdbo []models.TeamDb
 
 	if err := r.Db.Find(&msdbo).Error; err != nil {
 		response.WriteErrorString(http.StatusNotFound, "Could not fetch teams")
 	} else {
-		mso := make([]Team, len(msdbo))
+		mso := make([]models.Team, len(msdbo))
 		for i, ob := range msdbo {
 			mso[i] = ob.Team
 		}
@@ -86,8 +85,8 @@ func (r TeamResource) getAll(request *restful.Request, response *restful.Respons
 	}
 }
 
-func (r TeamResource) add(request *restful.Request, response *restful.Response) {
-	team := TeamDb{}
+func (r TeamAPI) add(request *restful.Request, response *restful.Response) {
+	team := models.TeamDb{}
 	err := request.ReadEntity(&(team.Team))
 	if err == nil {
 		r.Db.Create(&team)
@@ -98,9 +97,9 @@ func (r TeamResource) add(request *restful.Request, response *restful.Response) 
 	}
 }
 
-func (r TeamResource) delete(request *restful.Request, response *restful.Response) {
+func (r TeamAPI) delete(request *restful.Request, response *restful.Response) {
 	id := request.PathParameter("id")
-	var ms TeamDb
+	var ms models.TeamDb
 	if err := r.Db.Where("ID = ?", id).First(&ms).Error; err != nil {
 		response.WriteErrorString(http.StatusNotFound, fmt.Sprintf("Team '%s' not found", id))
 	} else if err := r.Db.Delete(&ms).Error; err != nil {

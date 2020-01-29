@@ -9,8 +9,8 @@ import (
 // APIVersion is the API version constant
 const APIVersion = "v1"
 
-// APIService is an interface to define an internal API resource
-type APIService interface {
+// Service is an interface to define an internal API resource
+type Service interface {
 	Register(prefix string, container *restful.Container)
 }
 
@@ -23,8 +23,9 @@ func RegisterAll(db *gorm.DB) (*restful.Container, error) {
 	container := restful.NewContainer()
 	container.Router(restful.CurlyRouter{})
 
-	team := TeamResource{Db: db}
-	team.Register("/api/teams", container)
+	//team := TeamAPI{Db: db}
+	//team.Register("/api/teams", container)
+	NewTeamAPI(db).Register("/api/teams", container)
 
 	config := openapi.Config{
 		WebServices: container.RegisteredWebServices(), // you control what services are visible

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/bartmeuris/sample-go-api/api"
+	"github.com/bartmeuris/sample-go-api/models"
 	"github.com/jinzhu/gorm"
-
-	api "github.com/bartmeuris/sample-go-api"
 
 	// _ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -25,10 +25,13 @@ func openDb() *gorm.DB {
 	db.SetLogger(log.New(os.Stdout, "\n", 0))
 	return db
 }
+
 func main() {
 	db := openDb()
 	defer db.Close()
-
+	if err := models.Migrate(db); err != nil {
+		log.Panicf("Error migrating database: %s", err)
+	}
 	wsContainer, err := api.RegisterAll(db)
 	if err != nil {
 		log.Panicf("Error creating API: %s", err)
