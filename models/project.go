@@ -2,9 +2,9 @@ package models
 
 // Project object
 type Project struct {
-	ID    string `gorm:"primary_key"`
-	Name  string
-	Roles []string
+	ID   string `gorm:"primary_key"`
+	Name string
+	//Roles []string
 }
 
 // ProjectDb object
